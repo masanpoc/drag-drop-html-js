@@ -1,0 +1,46 @@
+html {
+    background: #f4f4f4;
+}
+
+body {
+    margin: 10% 10%;
+    background: white;
+    box-shadow: 0 0 1.5px 1.5px #8080809c;
+    border-radius: 15px;
+}
+
+.layout {
+    display: grid;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 20px 0 50px 0;
+}
+
+.container {
+    width: 560px;
+    height: 70px;
+    border-radius: 8px;
+    margin: 50px 0;
+    border: 1px solid #a3a3a3;
+    background: #f4f4f4;
+    grid-column: 1/span 3;
+    position: relative;
+}
+
+.box {
+    width: 70px;
+    height: 70px;
+    box-shadow: 0 0 2px 0px #000000;
+    border-radius: 8px;
+    margin: 50px 0;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: move;
+}
+
+

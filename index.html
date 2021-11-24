@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag & Drop</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+
+        window.onload = function updateDOM() {
+            console.log('update')
+        };
+
+        // coordinate for calculating color
+        let distanceFromMouseToDragEl;
+
+        // object to store left position of each el inside container in order to do logic that prevents dropping an el on top of another
+        let internalDivs = {};
+
+        function handleDragStart(event) {
+            // setting data as html type and assigning it to id of dragged el
+            event.dataTransfer.setData("text/html", event.target.id);
+            // type of transfer is move
+            event.dataTransfer.effectAllowed = "move";
+            // specifying X coordinate of mouse relative to dragged el for further calculations
+            distanceFromMouseToDragEl = event.offsetX;
+
+        }
+
+        function handleDragOver(event) {
+            // prevent default behaviour
+            event.preventDefault();
+            // type of drop is move
+            event.dataTransfer.dropEffect = "move";
+        }
+
+        function handleDrop(event) {
+            // prevent default behaviour (open link...)
+            event.preventDefault();
+            // get the id of html data from the dragged el
+            const data = event.dataTransfer.getData("text/html");
+            // assign a node the value of the html data
+            const node = document.getElementById(data);
+            // style the node before appending it to container
+            node.style.margin=0;
+            node.style.zIndex=1;
+
+            // position is the sum/substract of the following distances
+            const distanceOfMouseToStartPage = event.pageX;
+            const distanceOfContainerToStartPage = document.getElementById('target').offsetLeft;
+            const borderLeft = 1;
+            let left =  distanceOfMouseToStartPage - distanceOfContainerToStartPage - borderLeft - distanceFromMouseToDragEl;
+            // limit constraints
+            if(left<0) {
+                left=0;
+            }
+            if(left>(document.getElementById('target').clientWidth- node.clientWidth)){
+                left=document.getElementById('target').clientWidth - node.clientWidth;
+            }
+
+            
+            
+            // we only drop the div if it won't touch any other internal div
+            if(isPossibleToDropWithoutTouchingAnyDiv(left, node.id)){
+                // calculate color using hue
+                const hue = calculateHue(left);
+                const color = hslToHex(hue, 100, 50);
+                node.style.background= color;
+
+                // position is absolute so we can move the el anywhere we want
+                node.style.position = 'absolute';
+                node.style.left = `${left}px`;
+
+                // appending node to container, no longer being present in prior position in the dom
+                event.target.appendChild(node);
+            }
+            
+        }
+
+        const orangeHue = 20;
+        const blueHue= 240;
+        
+        function calculateHue(position) {
+            const percentageBlue = position/(document.getElementById('target').clientWidth);
+            // orange hue is 20º & blue hue is 240º
+            const hue = orangeHue + percentageBlue*(blueHue-orangeHue);
+            return Math.round(hue);
+        }
+
+        // copied function from stackoverflow
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
+        function isPossibleToDropWithoutTouchingAnyDiv(left, id){
+            // check that the limits of our position are not included in any limits of other divs
+            const lowerLimit = left;
+            const upperLimit = left+document.getElementsByClassName('box')[0].clientWidth;
+            
+            let droppable = true;
+            // if theres already at least one div in container
+            if(Object.keys(internalDivs).length>0){
+                // check that no div will touch the dragged el if dropped
+                for (let key in internalDivs) {
+                    // no need to do conditionals, but being explicit:
+                    if(key==id){
+                        // also we are implementing at the same time the logic to only append the node if all the div has moved beyond its limits - compared with prior position
+                        if(!((lowerLimit > internalDivs[id][1]) || (upperLimit < internalDivs[id][0]))){
+                            droppable=false;
+                        } 
+                    } else {
+                        if(!((lowerLimit > internalDivs[key][1]) || (upperLimit < internalDivs[key][0]))){
+                            droppable=false;
+                        } 
+                    }
+                }
+                if(droppable){
+                    // update new limits/position
+                    internalDivs[id]=[lowerLimit, upperLimit];
+                }
+            }
+
+            // if theres no div in container
+            if(Object.keys(internalDivs).length==0){
+                // add id:[limit1, limit2] in object
+                internalDivs[id]=[lowerLimit, upperLimit];
+            }
+            
+
+            // return true when our div is not touching any other div
+            if(droppable) {
+                return true
+            } else {
+                return false
+            }
+        }
+
+
+    </script>
+</head>
+<body>
+    <div class="layout">
+        <div id='target' ondragover="handleDragOver(event)" ondrop="handleDrop(event)" class='container'></div>
+
+        <div id='a' class='box' draggable="true" ondragstart="handleDragStart(event)">A</div>
+        <div id='b' class='box' draggable="true" ondragstart="handleDragStart(event)">B</div>
+        <div id='c' class='box' draggable="true" ondragstart="handleDragStart(event)">C</div>
+        <div id='d' class='box' draggable="true" ondragstart="handleDragStart(event)">D</div>
+        <div id='e' class='box' draggable="true" ondragstart="handleDragStart(event)">E</div>
+        <div id='f' class='box' draggable="true" ondragstart="handleDragStart(event)">F</div>
+        <div id='g' class='box' draggable="true" ondragstart="handleDragStart(event)">G</div>
+        <div id='h' class='box' draggable="true" ondragstart="handleDragStart(event)">H</div>
+        
+    </div>
+    
+</body>
+</html>
